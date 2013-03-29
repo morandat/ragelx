@@ -6,16 +6,12 @@
   <version>0.2-SNAPSHOT</version>
   <packaging>jar</packaging>
 
-  <name>ragelx</name>
+  <name>RagelX</name>
+  <description>RagelX compiler, a simple alternative to ragel grammars</description>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
-
-  <scm>
-    <url>http://localhost:8000/</url>
-    <connection>scm:hg:file:///tmp/ragelx</connection>
-  </scm>
 
   <build>
 		<plugins>
@@ -47,9 +43,16 @@
 			<id>se</id>
 			<url>dav:https://webdav.labri.fr/vhosts/se.labri.fr/maven/</url>
 		</repository>
-		<snapshotRepository>
-			<id>se</id>
-			<url>dav:https://webdav.labri.fr/vhosts/se.labri.fr/maven/</url>
-		</snapshotRepository>
 	</distributionManagement>
+
+	<issueManagement>
+		<system>GitHub</system>
+		<url>https://github.com/morandat/ragelx/issues</url>
+	</issueManagement>
+
+	<scm>
+		<url>http://github.com/morandat/ragelx</url>
+		<connection>scm:git:git://github.com/morandat/ragelx.git</connection>
+		<developerConnection>scm:git:git@github.com:morandat/ragelx.git</developerConnection>
+	</scm>
 </project>
