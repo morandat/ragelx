@@ -1,4 +1,4 @@
-package fr.labri.ragelpp;
+package fr.labri.ragelx;
 
 import java.io.BufferedInputStream;
 import java.io.EOFException;
