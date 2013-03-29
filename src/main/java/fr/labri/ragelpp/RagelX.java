@@ -14,6 +14,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 
 public class RagelX {
 
@@ -51,7 +52,17 @@ public class RagelX {
 		openLanguage(_targetLanguage);
 	}
 
-	public void compile(final InputStream in, final OutputStream out) throws IOException,
+	public void compile(final InputStream in, final OutputStream out)
+			throws IOException, InterruptedException {
+		compile(in, out, (Collection<String>)null);
+	}
+	
+	public void compile(final InputStream in, final OutputStream out, String... moreOptions)
+			throws IOException, InterruptedException {
+		compile(in, out, Arrays.asList(moreOptions));
+	}
+	
+	public void compile(final InputStream in, final OutputStream out, Collection<String> moreOptions) throws IOException,
 			InterruptedException {
 		InputStream i = new MultipleFileInputStream(new Object[] {
 				openRessource(RAGEL_HEADER),
@@ -61,8 +72,10 @@ public class RagelX {
 		ArrayList<String> cmd = new ArrayList<String>(
 				Arrays.asList(PREPROCESS_COMMAND.split(" ")));
 		cmd.add("-D__MACHINE_NAME__=" + _machine);
+		if(moreOptions != null)
+			cmd.addAll(moreOptions);
 		cmd.add("-");
-
+		
 		final Process p = new ProcessBuilder(cmd).start();
 		OutputStream o = p.getOutputStream();
 		Thread t = new Thread(new Runnable() {
