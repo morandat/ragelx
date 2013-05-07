@@ -44,6 +44,11 @@
 #define EXTRACT_number(__name) \
 	>mark_##__name  $increment_##__name %__name
 
+#define DEPENDS(__name, __reg, ...)                 \
+	action goto##__name { LOOP_ON(__##__reg##_reg, __name##_internal) } \
+	__name ## _internal = __VA_ARGS__ @goto##__name; \
+	__name = __name ## _internal
+
 #ifndef BEGIN_REQUEST
 # define BEGIN_REQUEST
 #endif

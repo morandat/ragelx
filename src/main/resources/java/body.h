@@ -2,8 +2,8 @@ package __PACKAGE__;
 
 import java.util.Arrays; // For debugging only
 import java.nio.ByteBuffer;
-import fr.labri.jazzy.runtime.Utils;
-import fr.labri.jazzy.runtime.RagelParser;
+import __RUNTIME__.Utils;
+import __RUNTIME__.RagelParser;
 
 @SuppressWarnings("unused")
 public abstract class __CLASS_NAME__ extends RagelParser {

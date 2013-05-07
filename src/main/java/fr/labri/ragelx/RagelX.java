@@ -22,33 +22,40 @@ public class RagelX {
 	private static final String LANG_HEADER = "spec.h";
 	private static final String BODY_HEADER = "body.h";
 	private static final String DEFAULT_MACHINE_NAME = "DefaultMachine";
-	private static final String PREPROCESS_COMMAND = "gcc -E -P";
+	private static final String PREPROCESS_COMMAND = "gcc -E -P -I";
+	
 
+	public static final boolean DEBUG = Boolean.parseBoolean(System.getProperty("ragelx.debug", "false"));
+	
 	public static void main(String[] args) throws IOException,
 			URISyntaxException, InterruptedException {
 		String targetLanguage = "java";
 		InputStream in = System.in;
 		String machine = DEFAULT_MACHINE_NAME;
+		String includeDir = ".";
 
 		switch (args.length) {
 		default:
 		case 2:
 			targetLanguage = args[1];
 		case 1:
+			includeDir = getPath(args[0]);
 			machine = getName(args[0]);
 			in = openFile(args[0]);
 		case 0:
 		}
 
-		new RagelX(machine, targetLanguage).compile(in, System.out);
+		new RagelX(machine, targetLanguage, includeDir).compile(in, System.out);
 	}
 
 	private String _machine;
 	private String _targetLanguage;
+	private String _includeDir;
 
-	public RagelX(String machine, String targetLang) throws IOException {
+	public RagelX(String machine, String targetLang, String includeDir) throws IOException {
 		_machine = machine;
 		_targetLanguage = targetLang.toLowerCase();
+		_includeDir = includeDir == null ? "." : includeDir;
 		openLanguage(_targetLanguage);
 	}
 
@@ -71,10 +78,17 @@ public class RagelX {
 
 		ArrayList<String> cmd = new ArrayList<String>(
 				Arrays.asList(PREPROCESS_COMMAND.split(" ")));
+		
+		cmd.add(_includeDir);
 		cmd.add("-D__MACHINE_NAME__=" + _machine);
 		if(moreOptions != null)
 			cmd.addAll(moreOptions);
 		cmd.add("-");
+		
+		if(DEBUG) {
+			System.err.println(cmd);
+			System.err.println(Arrays.toString(((MultipleFileInputStream)i)._files));
+		}
 		
 		final Process p = new ProcessBuilder(cmd).start();
 		OutputStream o = p.getOutputStream();
@@ -122,9 +136,20 @@ public class RagelX {
 	private static String getName(String name) {
 		if ("-".equals(name))
 			return DEFAULT_MACHINE_NAME;
-		return name;
+		String n = new File(name).getName();
+		int p = n.lastIndexOf('.');
+		if(p != -1)
+			n = n.substring(0, p);
+		return n;
 	}
 
+	private static String getPath(String name) {
+		if ("-".equals(name))
+			return ".";
+		String n = new File(name).getParent();
+		return n;
+	}
+	
 	public static void syntax() {
 		System.err.println("bad command line");
 	}
@@ -199,6 +224,8 @@ public class RagelX {
 			byte[] b = new byte[1024];
 			int r;
 			while ((r = in.read(b)) > 0) {
+				if(DEBUG)
+					System.err.write(b, 0, r);
 				out.write(b, 0, r);
 			}
 		}
