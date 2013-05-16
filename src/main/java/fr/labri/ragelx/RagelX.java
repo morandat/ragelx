@@ -33,9 +33,12 @@ public class RagelX {
 		InputStream in = System.in;
 		String machine = DEFAULT_MACHINE_NAME;
 		String includeDir = ".";
+		OutputStream out = System.out;
 
 		switch (args.length) {
 		default:
+		case 3:
+			out = new FileOutputStream(args[2]);
 		case 2:
 			targetLanguage = args[1];
 		case 1:
@@ -45,7 +48,7 @@ public class RagelX {
 		case 0:
 		}
 
-		new RagelX(machine, targetLanguage, includeDir).compile(in, System.out);
+		new RagelX(machine, targetLanguage, includeDir).compile(in, out);
 	}
 
 	private String _machine;

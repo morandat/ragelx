@@ -89,7 +89,7 @@
 
 #define TRIGGER_dependent(__name, ...) \
  action __name {                       \
-    __##__name##_reg = __name;             \
+    __##__name##_reg = __name;         \
     on_ ## __name(data, __name);       \
  }
 

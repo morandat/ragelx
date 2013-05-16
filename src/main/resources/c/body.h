@@ -1,23 +1,23 @@
-REM include <errno.h>
-REM include <string.h>
-REM include <stdio.h>
-REM include <assert.h>
-REM include <stdlib.h>
-
-struct buffer {
-	const char *position, *end_position;
-};
-
-struct ragel_parser {
-	struct buffer buffer;
-	int cs;
-};
+REM ifndef __AS_RAGEL_HEADER__
+REM  include <errno.h>
+REM  include <string.h>
+REM  include <stdio.h>
+REM  include <assert.h>
+REM  include <stdlib.h>
+REM endif
+REM  include <stddef.h>
+REM  include <ragelx.h>
 
 #define STRUCT_DEF(__name, type, __dummy) \
   STRUCT_DEF_ ## type (__name, type, __dummy)
 
 #define STRUCT_DEF_number(__name, type, __dummy) /*
 	*/ int __name;                                 /*
+	*/ void (*on_##__name) (struct __PARSER_NAME__ *, int);
+
+#define STRUCT_DEF_dependent(__name, type, __dummy)       /*
+	*/ int __name;                                        /*
+	*/ int __##__name ## _reg ;                           /*
 	*/ void (*on_##__name) (struct __PARSER_NAME__ *, int);
 
 #define STRUCT_DEF_string(__name, type, __dummy) /*
@@ -31,46 +31,46 @@ struct __PARSER_NAME__ {
 	MARKS(STRUCT_DEF,)
 };
 
+struct __PARSER_NAME__* C(clone, __PARSER_NAME__)(struct __PARSER_NAME__ *templ, void *(*alloc)(size_t));
+int C(resume, __MACHINE_NAME__)(struct __PARSER_NAME__ *parser, struct buffer *buffer);
+struct __PARSER_NAME__* C(init, __MACHINE_NAME__)(struct __PARSER_NAME__ *parser);
+
+REM ifndef __AS_RAGEL_HEADER__
 %% write data;
+
+struct __PARSER_NAME__ * C(clone, __PARSER_NAME__)(struct __PARSER_NAME__ *templ, void *(*alloc)(size_t)){
+	return memcpy(alloc(sizeof(struct __PARSER_NAME__)), templ, sizeof(struct __PARSER_NAME__));
+}
 
 struct __PARSER_NAME__ * C(alloc, __PARSER_NAME__)(void *(*alloc)(size_t)){
 	return alloc(sizeof(struct __PARSER_NAME__));
 }
 
-void C(init, __MACHINE_NAME__)(struct __PARSER_NAME__ *parser) {
+struct __PARSER_NAME__* C(init, __MACHINE_NAME__)(struct __PARSER_NAME__ *parser) {
 	int cs;
 	%% write init;
 	parser->parser.cs = cs;
-	parser->parser.buffer.position = parser->parser.buffer.end_position = 0;
+	return parser;
 }
 
-void attach(struct buffer *buffer, const char *start, const char *stop) {
-	buffer->position = start;
-	buffer->end_position = stop;
-}
-
-int remaining(struct buffer *buffer) {
-	return buffer->end_position != buffer->position;
-}
-
-struct buffer *getBuffer(struct __PARSER_NAME__ *parser) {
-	return &parser->parser.buffer;
-}
-
-int C(resume, __MACHINE_NAME__)(struct __PARSER_NAME__ *parser) {
+int C(resume, __MACHINE_NAME__)(struct __PARSER_NAME__ *parser, struct buffer *buffer) {
 	int cs = parser->parser.cs;
-	const char *p = parser->parser.buffer.position;
-	const char *pe = parser->parser.buffer.end_position;
+	const char *p = buffer->position;
+	const char *pe = buffer->position + buffer->length;
 	const char *eof = NULL;
 	int fired = 0;
 	void (*action_req) (struct __PARSER_NAME__ *);
 	void (*action_nb) (struct __PARSER_NAME__ *, int);
 	void (*action_str) (struct __PARSER_NAME__ *, const char*, const char*);
+    /* Only to remove unused */
+    (void)eof; (void) action_nb; (void) action_str; (void) action_req;
 
 	%% write exec;
 
-	parser->parser.buffer.position = p;
-	return fired;
+	parser->parser.cs = cs;
+	buffer->position = p;
+	buffer->length = pe - p;
+	return fired ? !buffer->length : 0;
 }
 
 
@@ -108,7 +108,10 @@ static void dumpBuffer(FILE *out, const char* prefix, const char *p, const char 
 	static void debug_on_##__name(struct __PARSER_NAME__*parser, int nb) {         \
 		dumpNumber(stderr, S(__name), nb);     \
 	}
-
+#define DEBUG_TMPL_FUN_dependent(__name, ...) \
+	static void debug_on_##__name(struct __PARSER_NAME__*parser, int nb) {         \
+		dumpNumber(stderr, S(__name), nb);     \
+	}
 static void debug_on_new_request(struct __PARSER_NAME__ *parser) {
 	fprintf(stderr, "NEW REQUEST: " S(__MACHINE_NAME__) "\r\n");
 }
@@ -120,7 +123,11 @@ MARKS(DEBUG_TMPL_FUN, )
 
 void C(C(init, __MACHINE_NAME__), Debug)(struct __PARSER_NAME__ *parser) {
 	C(init, __MACHINE_NAME__)(parser);
+	(void)dumpNumber;
+	(void)dumpBuffer;
 	parser->on_new_request = debug_on_new_request;
 	parser->on_request_completed = debug_on_request_completed;
 	MARKS(DEBUG_TMPL_INIT, )
 }
+REM endif
+
